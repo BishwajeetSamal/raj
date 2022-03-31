@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    .border-danger {
+      border: 1px solid red
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Response Request formData</h1>
+  <button type="button" id="getData">Get all Records</button>
+  <form action="" method="post" id="formDataId">
+    <fieldset>
+      <legend>INPUT</legend>
+      <input type="text" required data-multifields name="Nma_control_1[]" placeholder="" value="A22" />
+    </fieldset>
+
+    <fieldset>
+      <legend>INPUT</legend>
+      <input type="text" required data-multifields name="Nma_control_1[]" placeholder="" value="B33" />
+    </fieldset>
+
+    <fieldset>
+      <legend>INPUT</legend>
+      <input type="text" required data-multifields name="Nma_control_1[]" placeholder="" value="C45" />
+    </fieldset>
+
+  <fieldset>
+      <legend>TEXTAREA</legend>
+      <textarea name="Nma_control_2" required></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>SPAN</legend>
+      <textarea name="Nma_control_3" required></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>INPUT</legend>
+      <select name="Nma_control_4" required>
+        <option disabled selected></option>
+        <option value="VAL1">Value1</option>
+        <option value="VAL2">Value2</option>
+        <option value="VAL3">Value3</option>
+        <option value="VAL4">Value4</option>
+        <option value="VAL5">Value5</option>
+      </select>
+    </fieldset>
+
+    <fieldset>
+      <legend>Number</legend>
+      <input type="number" required name="Nma_control_5" placeholder="" />
+    </fieldset>
+
+    <fieldset>
+      <legend>INPUT Radio</legend>
+      <input type="radio" value="rdo_1" data-for="Nma_control_6" checked
+        onchange="document.getElementById(this.dataset.for).value=this.value;" name="T_Nma_control_6"
+        class="inp_disabled" />
+      <input type="radio" value="rdo_2" data-for="Nma_control_6"
+        onchange="document.getElementById(this.dataset.for).value=this.value;" name="T_Nma_control_6"
+        class="inp_disabled" />
+      <input type="radio" value="rdo_3" data-for="Nma_control_6"
+        onchange="document.getElementById(this.dataset.for).value=this.value;" name="T_Nma_control_6"
+        class="inp_disabled" />
+      <input type="hidden" name="Nma_control_6" required id="Nma_control_6" value="rdo_0">
+    </fieldset>
+
+    <fieldset>
+      <legend>INPUT CheckBox</legend>
+      <input type="checkbox" data-for="Nma_control_7" value="chk_On_7" data-unchecked="chk_Off_7" data-required="true" name="T_Nma_control_7"
+        class="inp_disabled" />
+      <input type="checkbox" data-for="Nma_control_8" value="chk_On_8" data-unchecked="chk_Off_8" data-required="true" name="T_Nma_control_8"
+        class="inp_disabled" />
+      <input type="checkbox" data-for="Nma_control_9" value="chk_On_9" data-unchecked="chk_Off_9" data-required="true" name="T_Nma_control_9"
+        class="inp_disabled" />
+    </fieldset> 
+
+    <input type="hidden" name="set" value="True">
+    <button type="submit" onclick="submitForm()">Submit Form Records</button>
+  </form>
+  <script src="http://localhost:4000/assets/js/jquery.min.js"></script>
+  <script>
+    function flagMsg(typemsg, heading, text) {
+      console.log("Error:", typemsg, heading, text);
+    }
+    function ajaxRequest(formUrl, formData, API = false) {
+      return $.ajax({
+        url: formUrl, type: "POST", data: formData, dataType: "json",
+        success: function (data, textStatus, jqXHR) {
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+          flagMsg('danger', 'Server response', 'Something went wrong, please try again.');
+        }
+      });
+    }
+    function inp_set_all_input_fields_values(inp_formDataId, params) {
+      $("#" + inp_formDataId + " [name]").each(function (i, obj) {
+        if (obj.type == "radio" || obj.type == "checkbox") {
+          identify = obj.dataset.for;
+        } else {
+          identify = obj.name.replace("[]","");
+        }
+        inp_value_of_control = "";
+        console.log("object >",i,identify,typeof (params[identify]), Array.isArray(params[identify]));
+        if (typeof (params[identify]) == "object") {
+          // CheckType of GOLANG Object nullString or nullInt etc
+          if (Object.keys(params[identify]).includes("String")) {
+            inp_value_of_control = params[identify].String;
+          }
+          if (Object.keys(params[identify]).includes("Int64")) {
+            inp_value_of_control = params[identify].Int64;
+          }
+          if (Array.isArray(params[identify])) {
+            inp_value_of_control = params[identify].shift();
+          }
+        } else {
+          inp_value_of_control = params[identify];
+        }
+        switch (obj.tagName) {
+          case "INPUT":
+            if (obj.type == "radio" || obj.type == "checkbox") {
+              if (obj.dataset.for == identify && obj.value == inp_value_of_control) {
+                obj.checked = true;
+              } else {
+                obj.checked = false;
+              }
+            } else {
+              obj.value = inp_value_of_control;
+            }
+            break;
+          case "SELECT":
+            options4 = this.options;
+            for (let i = 0; i < options4.length; i++) {
+              options4[i].selected = (inp_value_of_control.includes(options4[i].value)) ? true : false;
+            }
+            break;
+          default: /*"SPAN" || "TEXTAREA"*/
+            obj.innerHTML = inp_value_of_control;
+            break;
+        }
+
+      });
+    }
+
+    document.querySelector('#getData').addEventListener('click', function () {
+      ajaxRequest("json_data_save.txt", { "get": true }).done(function (response) {
+        inp_set_all_input_fields_values("formDataId", response);
+      });
+    });
+
+    function inp_handling_check_box_disable_unusable(inp_form_control) {
+      $("#" + inp_form_control.id + " .inp_disabled ").each(function (i, obj) {
+        if (obj.tagName == "INPUT" && obj.type == "checkbox") {
+          var x = document.createElement("INPUT");
+          x.setAttribute("type", "hidden");
+          x.setAttribute("name", obj.dataset.for);
+          x.setAttribute("value", (obj.checked) ? obj.value : obj.dataset.unchecked);
+          if (obj.dataset.required == "true") {
+            x.setAttribute("required", true);
+          }
+          x.classList.add("inp_delete");
+          inp_form_control.appendChild(x);
+        }
+        obj.disabled = true;
+      });
+    }
+
+    /** Check multiSelect or Multi fields with same name array line UnName[]
+     * @input FormData and form id
+     * @output json(array) of formData with value in multi select return array of values
+     */
+    function inp_multiSelectOrMultiFieldswithSameName(AllFormDataObject, inp_form_id) {
+      formJSONData = Object.fromEntries(AllFormDataObject.entries())
+      $("#" + inp_form_id + " [data-multifields]").each(function (i, obj) {
+        formJSONData[obj.name] = AllFormDataObject.getAll(obj.name)
+      });
+      return formJSONData
+    }
+    function inp_handleFormSubmit_to_json(inp_formDataId) {
+      event.preventDefault();
+
+      inp_form_control = document.getElementById(inp_formDataId);
+      inp_handling_check_box_disable_unusable(inp_form_control)
+
+      const AllFormDataObject = new FormData(inp_form_control);
+
+      // const formJSON = Object.fromEntries(data.entries());
+
+      // for multi-selects or multi fields with same name line name[], we need special handling 
+      // formJSON.snacks = data.getAll('snacks');
+      const formJSON = inp_multiSelectOrMultiFieldswithSameName(AllFormDataObject, inp_form_control.id)
+
+      $(".inp_disabled").removeAttr("disabled");
+      // $(".inp_delete").remove();
+      return { "formData": formJSON, "formId": inp_formDataId };
+    }
+    function inp_Required_check_form_validation(inp_all_input_fields_in_array) {
+      inp_is_validate_form = true;
+      $('#' + inp_all_input_fields_in_array.formId + ' [required]').each(function (int_reqindex, int_req_cont) {
+        int_req_cont.classList.remove("border-danger");
+        if (!inp_all_input_fields_in_array.formData[int_req_cont.name]) {
+          // this field name is empty
+          int_req_cont.classList.add("border-danger");
+          console.log(int_req_cont.name);
+          inp_is_validate_form = false;
+        }
+      });
+      $(".inp_delete").remove();
+      if (inp_is_validate_form != true) {
+        $("#loading_animated").hide();
+        flagMsg("warning", "Warning", "Please fill all required fields", 4000);
+      }
+      return inp_is_validate_form;
+    }
+
+    function submitForm() {
+      inp_form_id = "formDataId";
+      inp_all_input_fields_in_array = inp_handleFormSubmit_to_json(inp_form_id);
+      if (inp_Required_check_form_validation(inp_all_input_fields_in_array)) {
+        ajaxRequest("backendphp.php", inp_all_input_fields_in_array.formData).done(function (response) {
+          console.log("submit form:", inp_all_input_fields_in_array.formData)
+        });
+      }
+
+    }
+
+  </script>
+</body>
+
+</html>
